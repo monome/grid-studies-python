@@ -441,67 +441,63 @@ pre[class*="language-"] {
 </style>
 </head>
 <body>
-<h1 id="toc_0">Grid Studies: Python</h1>
+<h1 id="toc_0">Grid Studies: Processing</h1>
 
-<p>Python is... (INSERT)</p>
+<p>Processing is... (INSERT)</p>
 
 <h2 id="toc_1">Prerequisites</h2>
 
-<p>This tutorial assumes a basic familiarity with the Python langauge and its programing workflow. If you&#39;re very new to Python, here are some tutorials (...)</p>
+<p>If you&#39;re very new to Java, here are some tutorials (...)</p>
 
-<p>Python 3 is required. See <a href="https://www.python.org/">python.org</a></p>
+<p>Download Processing: <a href="http://processing.org">processing.org</a></p>
 
-<p>Install pymonome: <code>pip pymonome</code></p>
+<p>Download the monome installer: <a href="http://monome.org/docs/begin">monome.org/docs/begin</a></p>
 
-<p>Install asyncio: <code>pip asyncio</code></p>
+<h2 id="toc_2">Library Setup</h2>
 
-<h2 id="toc_2">1. Connect and Basics</h2>
+<p>Download the monome-processing library:</p>
 
-<p><em>See grid-studies-1.py for this section.</em></p>
+<p><a href="https://github.com/monome/monome-processing/releases/latest">github.com/monome/monome-processing/releases/latest</a></p>
 
-<pre><code class="language-python">#! /usr/bin/env python3
+<p>Download the oscP5 library: </p>
 
-import asyncio
-import monome
+<p><a href="http://www.sojamo.de/libraries/oscp5">sojamo.de/libraries/oscp5</a></p>
 
-class GridStudies(monome.Monome):
-    def __init__(self):
-        super().__init__(&#39;/monome&#39;)
+<p>These libraries must be copied to the <code>libraries</code> folder of your sketchbook, which is typically <code>~/Documents/Processing/</code> on Mac and <code>/My Documents/Processing/</code> on Windows.</p>
 
-    def ready(self):
-        self.buffer = monome.LedBuffer(self.width, self.height)
+<p>For example, proper installation of <code>oscP5</code> on the Mac would look like:</p>
 
-    def grid_key(self, x, y, s):
-        print(&quot;key:&quot;, x, y, s)
-        self.buffer.led_level_set(x, y, s*15)
-        self.buffer.render(self)
+<pre><code>~/Documents/Processing/libraries/oscP5/library/oscP5.jar</code></pre>
 
-if __name__ == &#39;__main__&#39;:
-    loop = asyncio.get_event_loop()
-    asyncio.async(monome.create_serialosc_connection(GridStudies))
-    loop.run_forever()</code></pre>
+<p>You&#39;ll need to restart Processing if it&#39;s running while you installed these libraries.</p>
 
-<p>The <code>pymonome</code> library simplifies communication with the grid.</p>
+<h2 id="toc_3">1. Connect</h2>
 
-<p>Here the first monome device found is attached, the important line being within the <code>__main__</code> code towards the bottom:</p>
+<p>The monome-processing library facilitates easy connection and communication with grids. Connect to a grid with the following code:</p>
 
-<pre><code class="language-python">asyncio.async(monome.create_serialosc_connection(GridStudies))</code></pre>
+<pre><code class="language-java">import org.monome.Monome;
+    
+Monome m;
+    
+public void setup() {
+    m = new Monome(this);
+}</code></pre>
 
-<p>The library queries <em>serialosc</em> and connects the first found device to our class <code>GridStudies</code> which is the primary definition of this application.</p>
+<p>Here the first monome device found is attached. If you want to connect to a specific grid (if you have more than one connected) you can specify a serial number, which can be found using <em>serialosc-monitor</em>.</p>
 
-<p>For a detailed description of how the <em>serialosc</em> mechanism and protocol work, see <a href="http://monome.org/docs/tech:osc">monome.org/docs/tech:osc</a>.</p>
+<pre><code class="language-java">m = new Monome(this, &quot;m1000011&quot;);</code></pre>
 
-<p>We initialize our class:</p>
+<p>The library communicates with <em>serialosc</em> to discover attached devices using OSC. For a detailed description of how the mechanism and protocol work, see <a href="http://monome.org/docs/tech:osc">monome.org/docs/tech:osc</a>.</p>
 
-<pre><code class="language-python">class GridStudies(monome.Monome):
-    def __init__(self):
-        super().__init__(&#39;/monome&#39;)</code></pre>
+<h2 id="toc_4">2. Basics</h2>
 
-<p>The only argument specifies the <em>prefix</em> (in this case, <code>/monome</code>) which is attached to all OSC messages exchanged with serialosc. For most cases we simply use <code>/monome</code> as a default.</p>
+<p><em>See grid_studies_2.pde for this section.</em></p>
 
-<h3 id="toc_3">1.1 Key input</h3>
+<p><img src="images/grid-studies-p5-2.png" alt=""></p>
 
-<p>The library calls the function <code>grid_key()</code> upon receiving input from the grid. It has three parameters.</p>
+<h3 id="toc_5">2.1 Key input</h3>
+
+<p>The monome library calls the function <code>key()</code> upon receiving input from the grid. It has three parameters.</p>
 
 <pre><code>x : horizontal position (0-15)
 y : vertical position (0-7)
@@ -509,41 +505,85 @@ s : state (1 = key down, 0 = key up)</code></pre>
 
 <p>Below we define the key function and simply print out incoming data.</p>
 
-<pre><code class="language-python">def grid_key(self, x, y, s):
-    print(&quot;key:&quot;, x, y, s)</code></pre>
-
-<h3 id="toc_4">1.2 LED output</h3>
-
-<p>We use a subclass called <code>LedBuffer</code> for managing the display state. This section creates a buffer based on grid size:</p>
-
-<pre><code class="language-python">def ready(self):
-    self.buffer = monome.LedBuffer(self.width, self.height)</code></pre>
-
-<p>On initialization the buffer is cleared (all elements set to 0). Each LED on the grid can have a brightness range of 0-15, where 0 is off and 15 is maximum brightness.</p>
-
-<p>We can set an LED value with the <code>led_level_set()</code> function. Below we set (0,0) to full brightness (15).</p>
-
-<pre><code class="language-python">self.buffer.led_level_set(0, 0, 15)</code></pre>
-
-<p>For this to display, we must render the grid with this buffer:</p>
-
-<pre><code class="language-python">self.buffer.render(self)</code></pre>
-
-<h3 id="toc_5">1.3 Coupled interaction</h3>
-
-<p>The most basic example is to mirror the grid display with incoming key data:</p>
-
-<pre><code class="language-python">def grid_key(self, x, y, s):
-    print(&quot;key:&quot;, x, y, s)
-    self.buffer.led_level_set(x, y, s*15)
-    self.buffer.render(self)  
+<pre><code class="language-java">public void key(int x, int y, int s) {
+  System.out.println(&quot;key received: &quot; + x + &quot;, &quot; + y + &quot;, &quot; + s);
 }</code></pre>
 
-<p>Here the display buffer is updated and rendered on each key event. Since <code>s</code> is either 0 or 1, when we multiply it by 15 we get off or full brightness. We set the LED location according to the position incoming key press, x and y.</p>
+<p>We will, of course, do more interesting things with this function in the future.</p>
 
-<h2 id="toc_6">2. Further</h2>
+<h3 id="toc_6">2.2 LED output</h3>
 
-<p><em>See grid-studies-2.py for this section.</em></p>
+<p>Use the <code>m.refresh()</code> function to update the state of the LEDs on the grid. This function accepts an array which represents the entire grid, hence the full frame is updated on each call.</p>
+
+<p>First create the array:</p>
+
+<pre><code class="language-java">int[][] led = new int[8][16];</code></pre>
+
+<p>This array has 8 rows of 16 columns. On initialization this array is cleared (all elements set to 0). Each LED on the grid can have a brightness range of 0-15, where 0 is off and 15 is maximum brightness.</p>
+
+<p>We can draw a small pattern by setting individual elements of the array:</p>
+
+<pre><code class="language-java">led[0][0] = 15;
+led[2][0] = 5;
+led[0][2] = 5;</code></pre>
+
+<p>And finally, to copy this entire array to the grid:</p>
+
+<pre><code class="language-java">m.refresh(led);</code></pre>
+
+<p>As seen in <em>grid_studies_2.pde</em> we place this code inside the <code>draw()</code> function. Upon running the sketch you will see this:</p>
+
+<p><img src="images/grid-studies-p5-seen.jpg" alt=""></p>
+
+<h3 id="toc_7">2.3 Coupled interaction</h3>
+
+<p><em>See grid_studies<em>2</em>3.pde for this section.</em></p>
+
+<p>The previous code refreshes the grid constantly with every call of <code>draw()</code>, which we typically do not want to do-- it doesn&#39;t make sense to have the computer spend time redrawing the same thing constantly.</p>
+
+<p>Next we&#39;ll change the LED state to show which keys are being held, and only redraw when something has changed.</p>
+
+<p><img src="images/grid-studies-p5-2-3.png" alt=""></p>
+
+<p>First, we move the <code>led</code> array to the top, so that it is global. This way we can change the array from inside the <code>key()</code> function. We have to allocate the array inside of <code>setup()</code>.</p>
+
+<p>We add a boolean variable <code>dirty</code> to indicate if the grid needs to be refreshed. We set this to <code>true</code> within <code>setup()</code> so the grid is immediately cleared upon start.</p>
+
+<p>Now we have the can change the grid display upon incoming key data:</p>
+
+<pre><code class="language-java">public void key(int x, int y, int s) {
+  led[y][x] = s * 15;
+  dirty = true;  
+}</code></pre>
+
+<p>Since <code>s</code> is either 0 or 1, when we multiply it by 15 we get off or full brightness. We set the LED location according to the position incoming key press, x and y.</p>
+
+<p>We changed the <code>led</code> array, so we specify that the grid need refreshing:</p>
+
+<pre><code class="language-java">dirty = true;</code></pre>
+
+<p>Once this flag is set, the grid will be updated on the next iteration of <code>draw()</code>:</p>
+
+<pre><code class="language-java">public void draw() {
+  if(dirty) {
+    m.refresh(led);
+    dirty = false;
+  }
+}</code></pre>
+
+<p>Once we&#39;ve refreshed the grid, we set the <code>dirty</code> flag to <code>false</code> so we&#39;re not needlessly refreshing.</p>
+
+<p>The <code>draw()</code> function is called at 60fps unless you specify a different rate in <code>setup()</code> such as <code>frameRate(10);</code>. </p>
+
+<h3 id="toc_8">2.4 Decoupled interaction</h3>
+
+<p>The most basic decoupled interaction is a toggle. Turn the grid into a huge bank of toggles simply by changing line 21 (which is in the <code>key</code> function):</p>
+
+<pre><code class="language-java">if(s == 1) led[y][x] ^= 15;</code></pre>
+
+<p>Now only key downs (s = 1) do something. They use an xor operator to toggle the LED value between 0 and 15, depending on the previous state of the LED.</p>
+
+<h2 id="toc_9">3. Further</h2>
 
 <p>Now we&#39;ll show how basic grid applications are developed by creating a step sequencer. We will add features incrementally:</p>
 
@@ -557,181 +597,206 @@ s : state (1 = key down, 0 = key up)</code></pre>
 <li>Adjust playback loop with two-key gesture in position row.</li>
 </ul>
 
-<h3 id="toc_7">2.1 Structure</h3>
+<h3 id="toc_10">3.1 Toggles</h3>
 
-<p>We will have grid display refresh on a timer, which will later also serve as the play head. Below is the basic structure that our code will fit into:</p>
+<p><em>See grid-studies-3-1.pde for this step.</em></p>
 
-<pre><code class="language-python">def ready(self):
-    # ...
-    asyncio.async(self.play())
+<p>First we&#39;ll create a new array called <code>step</code> that can hold 6 rows worth of step data. On key input we&#39;ll look for key-down events in the top six rows:</p>
 
-@asyncio.coroutine
-def play(self):
-    while True:
-        # ...
-       self.draw()
-       yield from asyncio.sleep(0.1)</code></pre>
+<pre><code class="language-java">  // toggle steps
+  if(s == 1 &amp;&amp; y &lt; 6) {
+    step[y][x] ^= 1;
+    
+    dirty = true; 
+  }</code></pre>
 
-<p>The while loop within the <code>play()</code> function will be executed every <code>0.1</code> seconds. <code>self.draw()</code> is where we refresh the grid display.</p>
+<p>If this condition is true, we toggle the corresponding position in the <code>step</code> data and set the dirty flag so the grid will refresh.</p>
 
-<p>Key data will be processed as it comes in. First let&#39;s make a bank of toggles for the sequencer.</p>
+<p>We will &quot;build&quot; the LED display from scratch each time we need to refresh. This will be done inside of <code>draw()</code> so we no longer need the <code>led</code> array to be global. Below we simply copy the <code>step</code> data to the <code>led</code> array, doing the proper multiplication by 11 in order to get almost-full brightness.</p>
 
-<h3 id="toc_8">2.1 Toggles</h3>
-
-<p>First we&#39;ll create a new array called <code>step</code> that can hold 6 rows of step data, inside <code>ready()</code>:</p>
-
-<pre><code class="language-python">self.step = [[0 for col in range(self.width)] for row in range(6)]</code></pre>
-
-<p>On key input we&#39;ll look for key-down events in the top six rows:</p>
-
-<pre><code class="language-python">def grid_key(self, x, y, s):
-    # toggle steps
-   if s == 1 and y &lt; 6:
-       self.step[y][x] ^= 1
-       self.draw()</code></pre>
-
-<p>We will build the LED display from scratch each time we need to refresh. This will be done inside of <code>draw()</code>. Below we simply copy the <code>step</code> data to the <code>led</code> array, doing the proper multiplication by 11 in order to get almost-full brightness. Also note that we initialize <code>buffer</code> on each redraw, which gives us a blank canvas.</p>
-
-<pre><code class="language-java">def draw(self):
-   buffer = monome.LedBuffer(self.width, self.height)
-
-   # display steps
-   for x in range(self.width):
-       for y in range(6):
-           buffer.led_level_set(x, y, self.step[y][x])</code></pre>
+<pre><code class="language-java">if(dirty) {
+    int[][] led = new int[8][16];
+        
+    // display steps
+    for(int x=0;x&lt;16;x++)
+        for(int y=0;y&lt;6;y++)
+            led[y][x] = step[y][x] * 15;
+        
+    // update grid
+    m.refresh(led);
+    dirty = false;
+}</code></pre>
 
 <p>That&#39;ll get us started.</p>
 
-<h3 id="toc_9">2.2 Play</h3>
+<h3 id="toc_11">3.2 Play</h3>
 
-<p>On each iteration inside <code>play()</code> we process the next step, which in this case simply means incrementing <code>play_position</code>. This value must be wrapped to 0 if it&#39;s at the end.</p>
+<p><em>See grid-studies-3-2.pde for this step.</em></p>
 
-<pre><code class="language-python">def play(self):
-   while True:
-       if self.play_position == self.width - 1:
-           self.play_position = 0
-       else:
-           self.play_position += 1</code></pre>
+<p>For simplicity we&#39;re going to make a not-very-smart timer to drive our sequencer. Basically we&#39;ll count <code>draw()</code> cycles and upon matching a specified interval, we&#39;ll take a step forward in the sequence.</p>
 
-<p>The playback rate is controlled by the time interval between <code>play()</code> iterations:</p>
+<pre><code class="language-java">int timer;
+int play_position;
+int STEP_TIME = 10;
 
-<pre><code class="language-python">yield from asyncio.sleep(0.1)</code></pre>
+// ...
+
+public void draw() {
+  if(timer == STEP_TIME) {
+    if(play_position == 15)
+      play_position = 0;
+    else 
+      play_position++;
+    
+    timer = 0;
+    dirty = true;
+  }
+  else timer++;
+  
+  // ...</code></pre>
+
+<p>In <code>draw()</code> we check <code>timer</code> against <code>STEP_TIME</code>. If they are equal, we process the next step, which in this case simply means incrementing <code>play_position</code>, which must be wrapped to 0 if it&#39;s at the end. We reset <code>timer</code> so it can count back up, and set the dirty flag so the grid redraws.</p>
+
+<p>You can change the speed by altering <code>STEP_TIME</code>.</p>
 
 <p>For the redraw we add highlighting for the play position:</p>
 
-<pre><code class="language-python"># display steps
-for x in range(self.width):
-    # highlight the play position
-    if x == self.play_position:
-        highlight = 4
-    else:
-        highlight = 0
+<pre><code class="language-java">int highlight;
 
-    for y in range(6):
-        buffer.led_level_set(x, y, self.step[y][x] * 11 + highlight)</code></pre>
+// display steps
+for(int x=0;x&lt;16;x++) {
+    // highlight the play position
+    if(x == play_position)
+        highlight = 4;
+    else 
+        highlight = 0;
+   
+    for(int y=0;y&lt;6;y++)
+        led[y][x] = step[y][x] * 11 + highlight;
+}</code></pre>
 
 <p>During this loop which copies steps to the grid, we check if we&#39;re updating a column that is the play position. If so, we increase the highlight value. By adding this value during the copy we&#39;ll get a nice effect of an overlaid translucent bar.</p>
 
-<h3 id="toc_10">2.3 Triggers</h3>
+<h3 id="toc_12">3.3 Triggers</h3>
 
-<p>When the playhead advances to a new row we want something to happen which corresponds to the toggled-on rows. We&#39;ll do two things: we&#39;ll show separate visual feedback on the grid in the second-to-last (trigger) row, and we&#39;ll print something to the command line.</p>
+<p><em>See grid-studies-3-3.pde for this step.</em></p>
+
+<p>When the playhead advances to a new row we want something to happen which corresponds to the toggled-on rows. We&#39;ll do two things: we&#39;ll show separate visual feedback on the grid in the second-to-last (trigger) row, and we&#39;ll call a draw something to the computer screen.</p>
 
 <p>Drawing the trigger row happens entirely in the <code>draw()</code>:</p>
 
-<pre><code class="language-python"># draw trigger bar and on-states
-for x in range(self.width):
-    buffer.led_level_set(x, 6, 4)
-
-for y in range(6):
-    if self.step[y][self.play_position] == 1:
-        buffer.led_level_set(self.play_position, 6, 15)</code></pre>
+<pre><code class="language-java">// draw trigger bar and on-states
+for(int x=0;x&lt;16;x++)
+    led[6][x] = 4;    
+for(int y=0;y&lt;6;y++)
+    if(step[y][play_position] == 1)
+        led[6][y] = 15;</code></pre>
 
 <p>First we create a dim row (level 4 is fairly dim). Then we search through the <code>step</code> array at the current play position, showing a bright indicator for each on state. This displays a sort of horizontal correlation of rows (or &quot;channels&quot;) 1-6 current state.</p>
 
-<p>For the screen drawing, we create a function <code>trigger()</code> which gets passed values of activated steps. This is what we do, inside <code>draw()</code> right after we change <code>play_position</code>:</p>
+<p>For the screen drawing, we create a function <code>trigger()</code> which gets passed values of activated steps. This is what we do, inside <code>draw()</code> right after we change `play_position&#39;:</p>
 
-<pre><code class="language-python"># TRIGGER SOMETHING
-    for y in range(6):
-        if self.step[y][self.play_position] == 1:
-            self.trigger(y)</code></pre>
+<pre><code class="language-java">// TRIGGER SOMETHING
+for(int y=0;y&lt;6;y++)
+    if(step[y][play_position] == 1)
+        trigger(y);</code></pre>
 
 <p>And then <code>trigger()</code> itself:</p>
 
-<pre><code class="language-python">def trigger(self, i):
-    print(&quot;triggered&quot;, i)
+<pre><code class="language-java">public void trigger(int i) {
+  line(20,20+i*20,width-20,20+i*20);
 }</code></pre>
 
-<p>This could of course be something much more exciting-- MIDI notes, robot arms, explosions, etc.</p>
+<p>It&#39;s just drawing some lines. Some code is added throughout the file to set up drawing and gently fade everything on each redraw.</p>
 
-<h3 id="toc_11">2.4 Cutting</h3>
+<h3 id="toc_13">3.4 Cutting</h3>
+
+<p><em>See grid-studies-3-4.pde for this step.</em></p>
 
 <p>We will now use the bottom row to dynamically cut the playback position. First let&#39;s add a position display to the last row, which will be inside <code>draw()</code>:</p>
 
-<pre><code class="language-python"># draw play position
-    buffer.led_level_set(self.play_position, 7, 15)</code></pre>
+<pre><code class="language-java">led[7][play_position] = 15;</code></pre>
 
-<p>Now we look for key presses in the last row, in the <code>grid_key</code> function:</p>
+<p>Now we look for key presses in the last row, in the <code>key</code> function:</p>
 
-<pre><code class="language-python"># cut
-elif y == 7:
-    # cut
-    if s == 1:
-        self.cutting = True
-        self.next_position = x</code></pre>
+<pre><code class="language-java">public void key(int x, int y, int s) {
+  // toggle steps
+  if(s == 1 &amp;&amp; y &lt; 6) {
+    step[y][x] ^= 1;
+    
+    dirty = true; 
+  }
+  // cut
+  else if(y == 7) {
+    if(s == 1)
+      cutting = true;
+      next_position = x;  
+  }
+}</code></pre>
 
 <p>We&#39;ve added two variables, <code>cutting</code> and <code>next_position</code>. Check out the changed code where we check the timer:</p>
 
-<pre><code class="language-java">def play(self):
-    while True:
-        if self.cutting:
-            self.play_position = self.next_position
-        elif self.play_position == self.width - 1:
-            self.play_position = 0
-        else:
-            self.play_position += 1</code></pre>
+<pre><code class="language-java">if(timer == STEP_TIME) {
+    if(cutting)
+        play_position = next_position;
+    else if(play_position == 15)
+        play_position = 0;
+    else 
+        play_position++;
+// ...</code></pre>
 
 <p>Now, when pressing keys on the bottom row it will cue the next position to be played.</p>
 
-<h3 id="toc_12">2.5 Loop</h3>
+<h3 id="toc_14">3.5 Loop</h3>
 
 <p>Lastly, we&#39;ll implement setting the loop start and end points with a two-press gesture: pressing and holding the start point, and pressing an end point while still holding the first key. We&#39;ll need to add a variable to count keys held, one to track the last key pressed, and variables to store the loop positions.</p>
 
+<pre><code class="language-java">int keys_held, key_last;
+int loop_start, loop_end;</code></pre>
+
 <p>We count keys held on the bottom row thusly:</p>
 
-<pre><code class="language-python">self.keys_held = self.keys_held + (s * 2) - 1</code></pre>
+<pre><code class="language-java">keys_held = keys_held + (s*2) - 1;</code></pre>
 
 <p>By multiplying <code>s</code> by 2 and then subtracting one, we add one on a key down and subtract one on a key up.</p>
 
 <p>We&#39;ll then use the <code>keys_held</code> counter to do different actions:</p>
 
-<pre><code class="language-java"># cut
-if s == 1 and self.keys_held == 1:
-    self.cutting = True
-    self.next_position = x
-    self.key_last = x
-# set loop points
-elif s == 1 and self.keys_held == 2:
-    self.loop_start = self.key_last
-    self.loop_end = x</code></pre>
+<pre><code class="language-java">// cut and loop
+else if(y == 7) {
+    // track number of keys held
+    keys_held = keys_held + (s*2) - 1;
+        
+    // cut
+    if(s == 1 &amp;&amp; keys_held == 1) {
+        cutting = true;
+        next_position = x;
+        key_last = x;
+    }
+    // set loop points
+    else if(s == 1 &amp;&amp; keys_held == 2) {
+        loop_start = key_last;
+        loop_end = x;
+    }
+}</code></pre>
 
 <p>We then modify the position change code:</p>
 
-<pre><code class="language-python">def play(self):
-    while True:
-        if self.cutting:
-            self.play_position = self.next_position
-        elif self.play_position == self.width - 1:
-            self.play_position = 0
-        elif self.play_position == self.loop_end:
-            self.play_position = self.loop_start
-        else:
-            self.play_position += 1</code></pre>
+<pre><code class="language-java">if(timer == STEP_TIME) {
+    if(cutting)
+        play_position = next_position;
+    else if(play_position == 15)
+        play_position = 0;
+    else if(play_position == loop_end)
+        play_position = loop_start;
+    else 
+        play_position++;</code></pre>
 
 <p>Done!</p>
 
-<h2 id="toc_13">Closing</h2>
+<h2 id="toc_15">Closing</h2>
 
-<h3 id="toc_14">Suggested Excercises</h3>
+<h3 id="toc_16">Suggested Excercises</h3>
 
 <ul>
 <li>&quot;Record&quot; keypresses in the &quot;trigger&quot; row to the toggle matrix.</li>
@@ -744,11 +809,18 @@ elif s == 1 and self.keys_held == 2:
 </ul></li>
 </ul>
 
+<h2 id="toc_17">Credits</h2>
+
+<p><em>Processing</em> was designed by Ben Fry and Casey Reas and is maintained by the <a href="processing">Processing Foundation</a>.</p>
+
+<p><em>monome-processing</em> was written and is maintained by <a href="...">Tom Dinchak</a>.</p>
+
+<p>This tutorial was created by <a href="http://nnnnnnnn.org">Brian Crabtree</a> for <a href="monome.org">monome.org</a>.</p>
+
+<p>Contributions welcome. Submit a pull request to <a href="https://github.com/monome/grid-studies-processing">github.com/monome/grid-studies-python</a> or e-mail <a href="mailto:info@monome.org">info@monome.org</a>.</p>
+
 <script type="text/javascript">
 self="undefined"!=typeof window?window:"undefined"!=typeof WorkerGlobalScope&&self instanceof WorkerGlobalScope?self:{};var Prism=function(){var e=/\blang(?:uage)?-(?!\*)(\w+)\b/i,t=self.Prism={util:{encode:function(e){return e instanceof n?new n(e.type,t.util.encode(e.content),e.alias):"Array"===t.util.type(e)?e.map(t.util.encode):e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/\u00a0/g," ")},type:function(e){return Object.prototype.toString.call(e).match(/\[object (\w+)\]/)[1]},clone:function(e){var n=t.util.type(e);switch(n){case"Object":var a={};for(var r in e)e.hasOwnProperty(r)&&(a[r]=t.util.clone(e[r]));return a;case"Array":return e.map(function(e){return t.util.clone(e)})}return e}},languages:{extend:function(e,n){var a=t.util.clone(t.languages[e]);for(var r in n)a[r]=n[r];return a},insertBefore:function(e,n,a,r){r=r||t.languages;var i=r[e];if(2==arguments.length){a=arguments[1];for(var l in a)a.hasOwnProperty(l)&&(i[l]=a[l]);return i}var o={};for(var s in i)if(i.hasOwnProperty(s)){if(s==n)for(var l in a)a.hasOwnProperty(l)&&(o[l]=a[l]);o[s]=i[s]}return t.languages.DFS(t.languages,function(t,n){n===r[e]&&t!=e&&(this[t]=o)}),r[e]=o},DFS:function(e,n,a){for(var r in e)e.hasOwnProperty(r)&&(n.call(e,r,e[r],a||r),"Object"===t.util.type(e[r])?t.languages.DFS(e[r],n):"Array"===t.util.type(e[r])&&t.languages.DFS(e[r],n,r))}},highlightAll:function(e,n){for(var a,r=document.querySelectorAll('code[class*="language-"], [class*="language-"] code, code[class*="lang-"], [class*="lang-"] code'),i=0;a=r[i++];)t.highlightElement(a,e===!0,n)},highlightElement:function(a,r,i){for(var l,o,s=a;s&&!e.test(s.className);)s=s.parentNode;if(s&&(l=(s.className.match(e)||[,""])[1],o=t.languages[l]),o){a.className=a.className.replace(e,"").replace(/\s+/g," ")+" language-"+l,s=a.parentNode,/pre/i.test(s.nodeName)&&(s.className=s.className.replace(e,"").replace(/\s+/g," ")+" language-"+l);var g=a.textContent;if(g){g=g.replace(/^(?:\r?\n|\r)/,"");var u={element:a,language:l,grammar:o,code:g};if(t.hooks.run("before-highlight",u),r&&self.Worker){var c=new Worker(t.filename);c.onmessage=function(e){u.highlightedCode=n.stringify(JSON.parse(e.data),l),t.hooks.run("before-insert",u),u.element.innerHTML=u.highlightedCode,i&&i.call(u.element),t.hooks.run("after-highlight",u)},c.postMessage(JSON.stringify({language:u.language,code:u.code}))}else u.highlightedCode=t.highlight(u.code,u.grammar,u.language),t.hooks.run("before-insert",u),u.element.innerHTML=u.highlightedCode,i&&i.call(a),t.hooks.run("after-highlight",u)}}},highlight:function(e,a,r){var i=t.tokenize(e,a);return n.stringify(t.util.encode(i),r)},tokenize:function(e,n){var a=t.Token,r=[e],i=n.rest;if(i){for(var l in i)n[l]=i[l];delete n.rest}e:for(var l in n)if(n.hasOwnProperty(l)&&n[l]){var o=n[l];o="Array"===t.util.type(o)?o:[o];for(var s=0;s<o.length;++s){var g=o[s],u=g.inside,c=!!g.lookbehind,f=0,h=g.alias;g=g.pattern||g;for(var p=0;p<r.length;p++){var d=r[p];if(r.length>e.length)break e;if(!(d instanceof a)){g.lastIndex=0;var m=g.exec(d);if(m){c&&(f=m[1].length);var y=m.index-1+f,m=m[0].slice(f),v=m.length,k=y+v,b=d.slice(0,y+1),w=d.slice(k+1),O=[p,1];b&&O.push(b);var N=new a(l,u?t.tokenize(m,u):m,h);O.push(N),w&&O.push(w),Array.prototype.splice.apply(r,O)}}}}}return r},hooks:{all:{},add:function(e,n){var a=t.hooks.all;a[e]=a[e]||[],a[e].push(n)},run:function(e,n){var a=t.hooks.all[e];if(a&&a.length)for(var r,i=0;r=a[i++];)r(n)}}},n=t.Token=function(e,t,n){this.type=e,this.content=t,this.alias=n};if(n.stringify=function(e,a,r){if("string"==typeof e)return e;if("[object Array]"==Object.prototype.toString.call(e))return e.map(function(t){return n.stringify(t,a,e)}).join("");var i={type:e.type,content:n.stringify(e.content,a,r),tag:"span",classes:["token",e.type],attributes:{},language:a,parent:r};if("comment"==i.type&&(i.attributes.spellcheck="true"),e.alias){var l="Array"===t.util.type(e.alias)?e.alias:[e.alias];Array.prototype.push.apply(i.classes,l)}t.hooks.run("wrap",i);var o="";for(var s in i.attributes)o+=s+'="'+(i.attributes[s]||"")+'"';return"<"+i.tag+' class="'+i.classes.join(" ")+'" '+o+">"+i.content+"</"+i.tag+">"},!self.document)return self.addEventListener?(self.addEventListener("message",function(e){var n=JSON.parse(e.data),a=n.language,r=n.code;self.postMessage(JSON.stringify(t.util.encode(t.tokenize(r,t.languages[a])))),self.close()},!1),self.Prism):self.Prism;var a=document.getElementsByTagName("script");return a=a[a.length-1],a&&(t.filename=a.src,document.addEventListener&&!a.hasAttribute("data-manual")&&document.addEventListener("DOMContentLoaded",t.highlightAll)),self.Prism}();"undefined"!=typeof module&&module.exports&&(module.exports=Prism);
-</script>
-<script type="text/javascript">
-Prism.languages.python={comment:{pattern:/(^|[^\\])#.*?(\r?\n|$)/g,lookbehind:!0},string:/"""[\s\S]+?"""|'''[\s\S]+?'''|("|')(\\?.)*?\1/g,keyword:/\b(as|assert|break|class|continue|def|del|elif|else|except|exec|finally|for|from|global|if|import|in|is|lambda|pass|print|raise|return|try|while|with|yield)\b/g,"boolean":/\b(True|False)\b/g,number:/\b-?(0[box])?(?:[\da-f]+\.?\d*|\.\d+)(?:e[+-]?\d+)?j?\b/gi,operator:/[-+]|<=?|>=?|!|={1,2}|&{1,2}|\|?\||\?|\*|\/|~|\^|%|\b(or|and|not)\b/g,punctuation:/[{}[\];(),.:]/g};
 </script>
 <script type="text/javascript">
 Prism.languages.clike={comment:[{pattern:/(^|[^\\])\/\*[\w\W]*?\*\//g,lookbehind:!0},{pattern:/(^|[^\\:])\/\/.*?(\r?\n|$)/g,lookbehind:!0}],string:/("|')(\\\n|\\?.)*?\1/g,"class-name":{pattern:/((?:(?:class|interface|extends|implements|trait|instanceof|new)\s+)|(?:catch\s+\())[a-z0-9_\.\\]+/gi,lookbehind:!0,inside:{punctuation:/(\.|\\)/}},keyword:/\b(if|else|while|do|for|return|in|instanceof|function|new|try|throw|catch|finally|null|break|continue)\b/g,"boolean":/\b(true|false)\b/g,"function":{pattern:/[a-z0-9_]+\(/gi,inside:{punctuation:/\(/}},number:/\b-?(0x[\dA-Fa-f]+|\d*\.?\d+([Ee]-?\d+)?)\b/g,operator:/[-+]{1,2}|!|<=?|>=?|={1,3}|&{1,2}|\|?\||\?|\*|\/|~|\^|%/g,ignore:/&(lt|gt|amp);/gi,punctuation:/[{}[\];(),.:]/g};
