@@ -447,13 +447,17 @@ pre[class*="language-"] {
 
 <h2 id="toc_1">Prerequisites</h2>
 
-<p>This tutorial assumes a basic familiarity with the Python langauge and its programing workflow. If you&#39;re very new to Python, here are some tutorials (...)</p>
+<p>This tutorial assumes a basic familiarity with the Python langauge and its programing workflow. If you&#39;re very new to Python, here are some tutorials:</p>
 
-<p>Python 3 is required. See <a href="https://www.python.org/">python.org</a></p>
+<ul>
+<li><a href="https://docs.python.org/3/tutorial/">Python Tutorial</a>.</li>
+</ul>
+
+<p>Python 3.4 is required. See <a href="https://www.python.org/">python.org</a>. Python 3.3 with the <code>asyncio</code> module will also work.</p>
+
+<p>Install asyncio (for Python 3.3): <code>pip3 install asyncio</code></p>
 
 <p>Install pymonome: <code>pip3 install pymonome</code></p>
-
-<p>Install asyncio: <code>pip3 install asyncio</code></p>
 
 <p>Download the code examples here: <a href="https://github.com/monome/grid-studies-python/releases/latest">github.com/monome/grid-studies-python/releases/latest</a></p>
 
@@ -544,8 +548,8 @@ s : state (1 = key down, 0 = key up)</code></pre>
 def play(self):
     while True:
         # ...
-       self.draw()
-       yield from asyncio.sleep(0.1)</code></pre>
+        self.draw()
+        yield from asyncio.sleep(0.1)</code></pre>
 
 <p>The while loop within the <code>play()</code> function will be executed every <code>0.1</code> seconds. <code>self.draw()</code> is where we refresh the grid display.</p>
 
@@ -575,19 +579,19 @@ buffer.render(self)</code></pre>
 
 <pre><code class="language-python">def grid_key(self, x, y, s):
     # toggle steps
-   if s == 1 and y &lt; 6:
-       self.step[y][x] ^= 1
-       self.draw()</code></pre>
+    if s == 1 and y &lt; 6:
+        self.step[y][x] ^= 1
+        self.draw()</code></pre>
 
 <p>We will build the LED display from scratch each time we need to refresh. This will be done inside of <code>draw()</code>. Below we simply copy the <code>step</code> data to the <code>led</code> array, doing the proper multiplication by 11 in order to get almost-full brightness. Also note that we initialize <code>buffer</code> on each redraw, which gives us a blank canvas.</p>
 
-<pre><code class="language-java">def draw(self):
-   buffer = monome.LedBuffer(self.width, self.height)
+<pre><code class="language-python">def draw(self):
+    buffer = monome.LedBuffer(self.width, self.height)
 
-   # display steps
-   for x in range(self.width):
-       for y in range(6):
-           buffer.led_level_set(x, y, self.step[y][x])</code></pre>
+    # display steps
+    for x in range(self.width):
+        for y in range(6):
+            buffer.led_level_set(x, y, self.step[y][x])</code></pre>
 
 <p>That&#39;ll get us started.</p>
 
@@ -598,11 +602,11 @@ buffer.render(self)</code></pre>
 <p>On each iteration inside <code>play()</code> we process the next step, which in this case simply means incrementing <code>play_position</code>. This value must be wrapped to 0 if it&#39;s at the end.</p>
 
 <pre><code class="language-python">def play(self):
-   while True:
-       if self.play_position == self.width - 1:
-           self.play_position = 0
-       else:
-           self.play_position += 1</code></pre>
+    while True:
+        if self.play_position == self.width - 1:
+            self.play_position = 0
+        else:
+            self.play_position += 1</code></pre>
 
 <p>The playback rate is controlled by the time interval between <code>play()</code> iterations:</p>
 
@@ -644,15 +648,14 @@ for y in range(6):
 <p>For the screen drawing, we create a function <code>trigger()</code> which gets passed values of activated steps. This is what we do, inside <code>draw()</code> right after we change <code>play_position</code>:</p>
 
 <pre><code class="language-python"># TRIGGER SOMETHING
-    for y in range(6):
-        if self.step[y][self.play_position] == 1:
-            self.trigger(y)</code></pre>
+for y in range(6):
+    if self.step[y][self.play_position] == 1:
+        self.trigger(y)</code></pre>
 
 <p>And then <code>trigger()</code> itself:</p>
 
 <pre><code class="language-python">def trigger(self, i):
-    print(&quot;triggered&quot;, i)
-}</code></pre>
+    print(&quot;triggered&quot;, i)</code></pre>
 
 <p>This could of course be something much more exciting-- MIDI notes, robot arms, explosions, etc.</p>
 
@@ -663,7 +666,7 @@ for y in range(6):
 <p>We will now use the bottom row to dynamically cut the playback position. First let&#39;s add a position display to the last row, which will be inside <code>draw()</code>:</p>
 
 <pre><code class="language-python"># draw play position
-    buffer.led_level_set(self.play_position, 7, 15)</code></pre>
+buffer.led_level_set(self.play_position, 7, 15)</code></pre>
 
 <p>Now we look for key presses in the last row, in the <code>grid_key</code> function:</p>
 
@@ -676,7 +679,7 @@ elif y == 7:
 
 <p>We&#39;ve added two variables, <code>cutting</code> and <code>next_position</code>. Check out the changed code where we check the timer:</p>
 
-<pre><code class="language-java">def play(self):
+<pre><code class="language-python">def play(self):
     while True:
         if self.cutting:
             self.play_position = self.next_position
@@ -693,6 +696,13 @@ elif y == 7:
 
 <p>Lastly, we&#39;ll implement setting the loop start and end points with a two-press gesture: pressing and holding the start point, and pressing an end point while still holding the first key. We&#39;ll need to add a variable to count keys held, one to track the last key pressed, and variables to store the loop positions.</p>
 
+<pre><code class="language-python">def ready(self):
+    ...
+    self.loop_start = 0
+    self.loop_end = self.width - 1
+    self.keys_held = 0
+    self.key_last = 0</code></pre>
+
 <p>We count keys held on the bottom row thusly:</p>
 
 <pre><code class="language-python">self.keys_held = self.keys_held + (s * 2) - 1</code></pre>
@@ -701,7 +711,7 @@ elif y == 7:
 
 <p>We&#39;ll then use the <code>keys_held</code> counter to do different actions:</p>
 
-<pre><code class="language-java"># cut
+<pre><code class="language-python"># cut
 if s == 1 and self.keys_held == 1:
     self.cutting = True
     self.next_position = x
@@ -745,7 +755,7 @@ elif s == 1 and self.keys_held == 2:
 
 <p>Python was designed by Guido van Rossum and is maintained by the <a href="python.org">Python Software Foundation</a>.</p>
 
-<p><em>pymonome</em> was written and is maintained by <a href="https://github.com/artfwo/pymonome">Artem Popv</a>.</p>
+<p><em>pymonome</em> was written and is maintained by <a href="https://github.com/artfwo/pymonome">Artem Popov</a>.</p>
 
 <p>This tutorial was created by <a href="http://nnnnnnnn.org">Brian Crabtree</a> for <a href="monome.org">monome.org</a>.</p>
 
@@ -756,12 +766,6 @@ self="undefined"!=typeof window?window:"undefined"!=typeof WorkerGlobalScope&&se
 </script>
 <script type="text/javascript">
 Prism.languages.python={comment:{pattern:/(^|[^\\])#.*?(\r?\n|$)/g,lookbehind:!0},string:/"""[\s\S]+?"""|'''[\s\S]+?'''|("|')(\\?.)*?\1/g,keyword:/\b(as|assert|break|class|continue|def|del|elif|else|except|exec|finally|for|from|global|if|import|in|is|lambda|pass|print|raise|return|try|while|with|yield)\b/g,"boolean":/\b(True|False)\b/g,number:/\b-?(0[box])?(?:[\da-f]+\.?\d*|\.\d+)(?:e[+-]?\d+)?j?\b/gi,operator:/[-+]|<=?|>=?|!|={1,2}|&{1,2}|\|?\||\?|\*|\/|~|\^|%|\b(or|and|not)\b/g,punctuation:/[{}[\];(),.:]/g};
-</script>
-<script type="text/javascript">
-Prism.languages.clike={comment:[{pattern:/(^|[^\\])\/\*[\w\W]*?\*\//g,lookbehind:!0},{pattern:/(^|[^\\:])\/\/.*?(\r?\n|$)/g,lookbehind:!0}],string:/("|')(\\\n|\\?.)*?\1/g,"class-name":{pattern:/((?:(?:class|interface|extends|implements|trait|instanceof|new)\s+)|(?:catch\s+\())[a-z0-9_\.\\]+/gi,lookbehind:!0,inside:{punctuation:/(\.|\\)/}},keyword:/\b(if|else|while|do|for|return|in|instanceof|function|new|try|throw|catch|finally|null|break|continue)\b/g,"boolean":/\b(true|false)\b/g,"function":{pattern:/[a-z0-9_]+\(/gi,inside:{punctuation:/\(/}},number:/\b-?(0x[\dA-Fa-f]+|\d*\.?\d+([Ee]-?\d+)?)\b/g,operator:/[-+]{1,2}|!|<=?|>=?|={1,3}|&{1,2}|\|?\||\?|\*|\/|~|\^|%/g,ignore:/&(lt|gt|amp);/gi,punctuation:/[{}[\];(),.:]/g};
-</script>
-<script type="text/javascript">
-Prism.languages.java=Prism.languages.extend("clike",{keyword:/\b(abstract|continue|for|new|switch|assert|default|goto|package|synchronized|boolean|do|if|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while)\b/g,number:/\b0b[01]+\b|\b0x[\da-f]*\.?[\da-fp\-]+\b|\b\d*\.?\d+[e]?[\d]*[df]\b|\b\d*\.?\d+\b/gi,operator:{pattern:/(^|[^\.])(?:\+=|\+\+?|-=|--?|!=?|<{1,2}=?|>{1,3}=?|==?|&=|&&?|\|=|\|\|?|\?|\*=?|\/=?|%=?|\^=?|:|~)/gm,lookbehind:!0}});
 </script>
 </body>
 
