@@ -13,6 +13,8 @@ Install pymonome: `pip3 install pymonome`
 
 Install asyncio: `pip3 install asyncio`
 
+Download the code examples here: [github.com/monome/grid-studies-python/releases/latest](https://github.com/monome/grid-studies-python/releases/latest)
+
 ## 1. Connect and Basics
 
 *See grid-studies-1.py for this section.*
