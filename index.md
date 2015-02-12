@@ -5,13 +5,15 @@ Python is is a widely used general-purpose, high-level programming language. Its
 
 ## Prerequisites
 
-This tutorial assumes a basic familiarity with the Python langauge and its programing workflow. If you're very new to Python, here are some tutorials (...)
+This tutorial assumes a basic familiarity with the Python langauge and its programing workflow. If you're very new to Python, here are some tutorials:
 
-Python 3 is required. See [python.org](https://www.python.org/)
+- [Python Tutorial](https://docs.python.org/3/tutorial/).
+
+Python 3.4 is required. See [python.org](https://www.python.org/). Python 3.3 with the `asyncio` module will also work.
+
+Install asyncio (for Python 3.3): `pip3 install asyncio`
 
 Install pymonome: `pip3 install pymonome`
-
-Install asyncio: `pip3 install asyncio`
 
 Download the code examples here: [github.com/monome/grid-studies-python/releases/latest](https://github.com/monome/grid-studies-python/releases/latest)
 
@@ -65,15 +67,15 @@ The only argument specifies the *prefix* (in this case, `/monome`) which is atta
 
 The library calls the function `grid_key()` upon receiving input from the grid. It has three parameters.
 
-	x : horizontal position (0-15)
-	y : vertical position (0-7)
-	s : state (1 = key down, 0 = key up)
+    x : horizontal position (0-15)
+    y : vertical position (0-7)
+    s : state (1 = key down, 0 = key up)
 
 Below we define the key function and simply print out incoming data.
 
 ```python
 def grid_key(self, x, y, s):
-	print("key:", x, y, s)
+    print("key:", x, y, s)
 ```
 
 ### 1.2 LED output
@@ -104,15 +106,15 @@ We will have grid display refresh on a timer, which will later also serve as the
 
 ```python
 def ready(self):
-	# ...
-	asyncio.async(self.play())
+    # ...
+    asyncio.async(self.play())
 
 @asyncio.coroutine
 def play(self):
-	while True:
-		# ...
-       self.draw()
-       yield from asyncio.sleep(0.1)
+    while True:
+        # ...
+        self.draw()
+        yield from asyncio.sleep(0.1)
 ```
 
 The while loop within the `play()` function will be executed every `0.1` seconds. `self.draw()` is where we refresh the grid display.
@@ -123,7 +125,7 @@ Furthermore, we'll use a subclass called `LedBuffer` for managing the display st
 
 ```python
 def ready(self):
-	self.buffer = monome.LedBuffer(self.width, self.height)
+    self.buffer = monome.LedBuffer(self.width, self.height)
 ```
 
 Instead of updating single LEDs at a time, we'll draw the entire grid and then render that to the hardware:
@@ -149,23 +151,23 @@ On key input we'll look for key-down events in the top six rows:
 
 ```python
 def grid_key(self, x, y, s):
-	# toggle steps
-   if s == 1 and y < 6:
-       self.step[y][x] ^= 1
-       self.draw()
+    # toggle steps
+    if s == 1 and y < 6:
+        self.step[y][x] ^= 1
+        self.draw()
 ```
 
 We will build the LED display from scratch each time we need to refresh. This will be done inside of `draw()`. Below we simply copy the `step` data to the `led` array, doing the proper multiplication by 11 in order to get almost-full brightness. Also note that we initialize `buffer` on each redraw, which gives us a blank canvas.
 
-```java
+```python
 def draw(self):
-   buffer = monome.LedBuffer(self.width, self.height)
+    buffer = monome.LedBuffer(self.width, self.height)
 
-   # display steps
-   for x in range(self.width):
-       for y in range(6):
-           buffer.led_level_set(x, y, self.step[y][x])
-```	
+    # display steps
+    for x in range(self.width):
+        for y in range(6):
+            buffer.led_level_set(x, y, self.step[y][x])
+```
 
 That'll get us started.
 
@@ -177,11 +179,11 @@ On each iteration inside `play()` we process the next step, which in this case s
 
 ```python
 def play(self):
-   while True:
-       if self.play_position == self.width - 1:
-           self.play_position = 0
-       else:
-           self.play_position += 1
+    while True:
+        if self.play_position == self.width - 1:
+            self.play_position = 0
+        else:
+            self.play_position += 1
 ```
 
 The playback rate is controlled by the time interval between `play()` iterations:
@@ -195,14 +197,14 @@ For the redraw we add highlighting for the play position:
 ```python
 # display steps
 for x in range(self.width):
-	# highlight the play position
-	if x == self.play_position:
-		highlight = 4
-	else:
-		highlight = 0
+    # highlight the play position
+    if x == self.play_position:
+        highlight = 4
+    else:
+        highlight = 0
 
-	for y in range(6):
-		buffer.led_level_set(x, y, self.step[y][x] * 11 + highlight)
+    for y in range(6):
+        buffer.led_level_set(x, y, self.step[y][x] * 11 + highlight)
 ```
 
 During this loop which copies steps to the grid, we check if we're updating a column that is the play position. If so, we increase the highlight value. By adding this value during the copy we'll get a nice effect of an overlaid translucent bar.
@@ -218,11 +220,11 @@ Drawing the trigger row happens entirely in the `draw()`:
 ```python
 # draw trigger bar and on-states
 for x in range(self.width):
-	buffer.led_level_set(x, 6, 4)
+    buffer.led_level_set(x, 6, 4)
 
 for y in range(6):
-	if self.step[y][self.play_position] == 1:
-		buffer.led_level_set(self.play_position, 6, 15)
+    if self.step[y][self.play_position] == 1:
+        buffer.led_level_set(self.play_position, 6, 15)
 ```
 
 First we create a dim row (level 4 is fairly dim). Then we search through the `step` array at the current play position, showing a bright indicator for each on state. This displays a sort of horizontal correlation of rows (or "channels") 1-6 current state.
@@ -231,17 +233,16 @@ For the screen drawing, we create a function `trigger()` which gets passed value
 
 ```python
 # TRIGGER SOMETHING
-	for y in range(6):
-		if self.step[y][self.play_position] == 1:
-			self.trigger(y)
+for y in range(6):
+    if self.step[y][self.play_position] == 1:
+        self.trigger(y)
 ```
 
 And then `trigger()` itself:
 
 ```python
 def trigger(self, i):
-	print("triggered", i)
-}
+    print("triggered", i)
 ```
 
 This could of course be something much more exciting-- MIDI notes, robot arms, explosions, etc.
@@ -254,7 +255,7 @@ We will now use the bottom row to dynamically cut the playback position. First l
 
 ```python
 # draw play position
-	buffer.led_level_set(self.play_position, 7, 15)
+buffer.led_level_set(self.play_position, 7, 15)
 ```
 
 Now we look for key presses in the last row, in the `grid_key` function:
@@ -262,23 +263,23 @@ Now we look for key presses in the last row, in the `grid_key` function:
 ```python
 # cut
 elif y == 7:
-	# cut
-	if s == 1:
-		self.cutting = True
-		self.next_position = x
+    # cut
+    if s == 1:
+        self.cutting = True
+        self.next_position = x
 ```
 
 We've added two variables, `cutting` and `next_position`. Check out the changed code where we check the timer:
 
-```java
+```python
 def play(self):
-	while True:
-		if self.cutting:
-			self.play_position = self.next_position
-		elif self.play_position == self.width - 1:
-			self.play_position = 0
-		else:
-			self.play_position += 1
+    while True:
+        if self.cutting:
+            self.play_position = self.next_position
+        elif self.play_position == self.width - 1:
+            self.play_position = 0
+        else:
+            self.play_position += 1
 ```
 
 Now, when pressing keys on the bottom row it will cue the next position to be played.
@@ -288,6 +289,15 @@ Now, when pressing keys on the bottom row it will cue the next position to be pl
 *See grid-studies-2-5.py for this section.*
 
 Lastly, we'll implement setting the loop start and end points with a two-press gesture: pressing and holding the start point, and pressing an end point while still holding the first key. We'll need to add a variable to count keys held, one to track the last key pressed, and variables to store the loop positions.
+
+```python
+def ready(self):
+    ...
+    self.loop_start = 0
+    self.loop_end = self.width - 1
+    self.keys_held = 0
+    self.key_last = 0
+```
 
 We count keys held on the bottom row thusly:
 
@@ -299,31 +309,31 @@ By multiplying `s` by 2 and then subtracting one, we add one on a key down and s
 
 We'll then use the `keys_held` counter to do different actions:
 
-```java
+```python
 # cut
 if s == 1 and self.keys_held == 1:
-	self.cutting = True
-	self.next_position = x
-	self.key_last = x
+    self.cutting = True
+    self.next_position = x
+    self.key_last = x
 # set loop points
 elif s == 1 and self.keys_held == 2:
-	self.loop_start = self.key_last
-	self.loop_end = x
+    self.loop_start = self.key_last
+    self.loop_end = x
 ```
 
 We then modify the position change code:
 
 ```python
 def play(self):
-	while True:
-		if self.cutting:
-			self.play_position = self.next_position
-		elif self.play_position == self.width - 1:
-			self.play_position = 0
-		elif self.play_position == self.loop_end:
-			self.play_position = self.loop_start
-		else:
-			self.play_position += 1
+    while True:
+        if self.cutting:
+            self.play_position = self.next_position
+        elif self.play_position == self.width - 1:
+            self.play_position = 0
+        elif self.play_position == self.loop_end:
+            self.play_position = self.loop_start
+        else:
+            self.play_position += 1
 ```
 
 Done!
@@ -336,15 +346,15 @@ Done!
 - "Record" keypresses in the "trigger" row to the toggle matrix.
 - Display the loop range on the bottom row of the grid.
 - Use the rightmost key in the "trigger" row as an "alt" key.
-	- If "alt" is held while pressing a toggle, clear the entire row.
-	- If "alt" is held while pressing the play row, reverse the direction of play.
+    - If "alt" is held while pressing a toggle, clear the entire row.
+    - If "alt" is held while pressing the play row, reverse the direction of play.
 
-	
+    
 ## Credits
 
 Python was designed by Guido van Rossum and is maintained by the [Python Software Foundation](python.org).
 
-*pymonome* was written and is maintained by [Artem Popv](https://github.com/artfwo/pymonome).
+*pymonome* was written and is maintained by [Artem Popov](https://github.com/artfwo/pymonome).
 
 This tutorial was created by [Brian Crabtree](http://nnnnnnnn.org) for [monome.org](monome.org).
 
