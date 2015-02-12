@@ -9,9 +9,9 @@ This tutorial assumes a basic familiarity with the Python langauge and its progr
 
 Python 3 is required. See [python.org](https://www.python.org/)
 
-Install pymonome: `pip pymonome`
+Install pymonome: `pip3 install pymonome`
 
-Install asyncio: `pip asyncio`
+Install asyncio: `pip3 install asyncio`
 
 ## 1. Connect and Basics
 
@@ -27,13 +27,9 @@ class GridStudies(monome.Monome):
     def __init__(self):
         super().__init__('/monome')
 
-    def ready(self):
-        self.buffer = monome.LedBuffer(self.width, self.height)
-
     def grid_key(self, x, y, s):
         print("key:", x, y, s)
-        self.buffer.led_level_set(x, y, s*15)
-        self.buffer.render(self)
+        self.led_level_set(x, y, s*15)
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
@@ -80,44 +76,15 @@ def grid_key(self, x, y, s):
 
 ### 1.2 LED output
 
-We use a subclass called `LedBuffer` for managing the display state. This section creates a buffer based on grid size:
-
-```python
-def ready(self):
-	self.buffer = monome.LedBuffer(self.width, self.height)
-```
-
-On initialization the buffer is cleared (all elements set to 0). Each LED on the grid can have a brightness range of 0-15, where 0 is off and 15 is maximum brightness.
-
 We can set an LED value with the `led_level_set()` function. Below we set (0,0) to full brightness (15).
 
 ```python
-self.buffer.led_level_set(0, 0, 15)
+self.buffer.led_level_set(x, y, 15)
 ```
 
-For this to display, we must render the grid with this buffer:
-
-```python
-self.buffer.render(self)
-```
-
-### 1.3 Coupled interaction
-
-The most basic example is to mirror the grid display with incoming key data:
-
-```python
-def grid_key(self, x, y, s):
-	print("key:", x, y, s)
-	self.buffer.led_level_set(x, y, s*15)
-	self.buffer.render(self)  
-}
-```
-
-Here the display buffer is updated and rendered on each key event. Since `s` is either 0 or 1, when we multiply it by 15 we get off or full brightness. We set the LED location according to the position incoming key press, x and y.
+Here we send a new LED upate per key event. Since `s` is either 0 or 1, when we multiply it by 15 we get off or full brightness. We set the LED location according to the position incoming key press, x and y.
 
 ## 2. Further
-
-*See grid-studies-2.py for this section.*
 
 Now we'll show how basic grid applications are developed by creating a step sequencer. We will add features incrementally:
 
@@ -148,9 +115,27 @@ def play(self):
 
 The while loop within the `play()` function will be executed every `0.1` seconds. `self.draw()` is where we refresh the grid display.
 
-Key data will be processed as it comes in. First let's make a bank of toggles for the sequencer.
+Key data will be processed as it comes in.
+
+Furthermore, we'll use a subclass called `LedBuffer` for managing the display state. This section creates a buffer based on grid size:
+
+```python
+def ready(self):
+	self.buffer = monome.LedBuffer(self.width, self.height)
+```
+
+Instead of updating single LEDs at a time, we'll draw the entire grid and then render that to the hardware:
+
+```python
+# update grid
+buffer.render(self)
+```
+
+First let's make a bank of toggles for the sequencer.
 
 ### 2.1 Toggles
+
+*See grid-studies-2-1.py for this section.*
 
 First we'll create a new array called `step` that can hold 6 rows of step data, inside `ready()`:
 
@@ -183,6 +168,8 @@ def draw(self):
 That'll get us started.
 
 ### 2.2 Play
+
+*See grid-studies-2-2.py for this section.*
 
 On each iteration inside `play()` we process the next step, which in this case simply means incrementing `play_position`. This value must be wrapped to 0 if it's at the end.
 
@@ -219,6 +206,8 @@ for x in range(self.width):
 During this loop which copies steps to the grid, we check if we're updating a column that is the play position. If so, we increase the highlight value. By adding this value during the copy we'll get a nice effect of an overlaid translucent bar.
 
 ### 2.3 Triggers
+
+*See grid-studies-2-3.py for this section.*
 
 When the playhead advances to a new row we want something to happen which corresponds to the toggled-on rows. We'll do two things: we'll show separate visual feedback on the grid in the second-to-last (trigger) row, and we'll print something to the command line.
 
@@ -257,6 +246,8 @@ This could of course be something much more exciting-- MIDI notes, robot arms, e
 
 ### 2.4 Cutting
 
+*See grid-studies-2-4.py for this section.*
+
 We will now use the bottom row to dynamically cut the playback position. First let's add a position display to the last row, which will be inside `draw()`:
 
 ```python
@@ -291,6 +282,8 @@ def play(self):
 Now, when pressing keys on the bottom row it will cue the next position to be played.
 
 ### 2.5 Loop
+
+*See grid-studies-2-5.py for this section.*
 
 Lastly, we'll implement setting the loop start and end points with a two-press gesture: pressing and holding the start point, and pressing an end point while still holding the first key. We'll need to add a variable to count keys held, one to track the last key pressed, and variables to store the loop positions.
 
@@ -343,3 +336,14 @@ Done!
 - Use the rightmost key in the "trigger" row as an "alt" key.
 	- If "alt" is held while pressing a toggle, clear the entire row.
 	- If "alt" is held while pressing the play row, reverse the direction of play.
+
+	
+## Credits
+
+Python was designed by Guido van Rossum and is maintained by the [Python Software Foundation](python.org).
+
+*pymonome* was written and is maintained by [Artem Popv](https://github.com/artfwo/pymonome).
+
+This tutorial was created by [Brian Crabtree](http://nnnnnnnn.org) for [monome.org](monome.org).
+
+Contributions welcome. Submit a pull request to [github.com/monome/grid-studies-python](https://github.com/monome/grid-studies-python) or e-mail [info@monome.org](mailto:info@monome.org).

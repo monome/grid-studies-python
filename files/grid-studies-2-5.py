@@ -9,13 +9,9 @@ class GridStudies(monome.Monome):
 
     def ready(self):
         self.step = [[0 for col in range(self.width)] for row in range(6)]
-        self.loop_start = 0
-        self.loop_end = self.width - 1
         self.play_position = 0
         self.next_position = 0
         self.cutting = False
-        self.keys_held = 0
-        self.key_last = 0
 
         asyncio.async(self.play())
 
@@ -77,18 +73,13 @@ class GridStudies(monome.Monome):
         if s == 1 and y < 6:
             self.step[y][x] ^= 1
             self.draw()
-        # cut and loop
+        # cut
         elif y == 7:
-            self.keys_held = self.keys_held + (s * 2) - 1
             # cut
             if s == 1 and self.keys_held == 1:
                 self.cutting = True
                 self.next_position = x
                 self.key_last = x
-            # set loop points
-            elif s == 1 and self.keys_held == 2:
-                self.loop_start = self.key_last
-                self.loop_end = x
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
