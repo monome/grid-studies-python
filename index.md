@@ -83,7 +83,7 @@ def grid_key(self, x, y, s):
 We can set an LED value with the `led_level_set()` function. Below we set (0,0) to full brightness (15).
 
 ```python
-self.buffer.led_level_set(x, y, 15)
+self.buffer.led_level_set(x, y, s*15)
 ```
 
 Here we send a new LED upate per key event. Since `s` is either 0 or 1, when we multiply it by 15 we get off or full brightness. We set the LED location according to the position incoming key press, x and y.
@@ -166,7 +166,7 @@ def draw(self):
     # display steps
     for x in range(self.width):
         for y in range(6):
-            buffer.led_level_set(x, y, self.step[y][x])
+            buffer.led_level_set(x, y, self.step[y][x] * 11)
 ```
 
 That'll get us started.
