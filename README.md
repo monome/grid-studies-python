@@ -1,3 +1,3 @@
 # Grid Studies: Python
 
-[monome.github.io/grid-studies-python](http://monome.github.io/grid-studies-python)
+[monome.org/grid-studies-python](http://monome.org/grid-studies-python)
