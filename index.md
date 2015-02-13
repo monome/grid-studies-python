@@ -1,13 +1,12 @@
 # Grid Studies: Python
 
+By design the monome grid does nothing on it's own. You the user assign it purpose and meaning: instrument, experiment, tool, toy... choose your own adventure. This grid is *intended* to be reimagined. Here we set forth to impart some introductory knowledge: potential energy for radical creative freedom.
 
 Python is is a widely used general-purpose, high-level programming language. Its design philosophy emphasizes code readability, and its syntax allows programmers to express concepts in fewer lines of code than would be possible in languages such as C++ or Java. The language provides constructs intended to enable clear programs on both a small and large scale. (from [Wikipedia](http://en.wikipedia.org/wiki/Python_(programming_language)))
 
 ## Prerequisites
 
-This tutorial assumes a basic familiarity with the Python langauge and its programing workflow. If you're very new to Python, here are some tutorials:
-
-- [Python Tutorial](https://docs.python.org/3/tutorial/).
+This tutorial assumes a basic familiarity with the Python langauge and its programing workflow. If you're very new to Python, check out the [Python Tutorial](https://docs.python.org/3/tutorial/).
 
 Python 3.4 is required. See [python.org](https://www.python.org/). Python 3.3 with the `asyncio` module will also work.
 
