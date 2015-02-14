@@ -85,7 +85,7 @@ We can set an LED value with the `led_level_set()` function. Below we set (0,0) 
 self.led_level_set(x, y, s*15)
 ```
 
-Here we send a new LED upate per key event. Since `s` is either 0 or 1, when we multiply it by 15 we get off or full brightness. We set the LED location according to the position incoming key press, x and y.
+Here we send a new LED update per key event. Since `s` is either 0 or 1, when we multiply it by 15 we get off or full brightness. We set the LED location according to the position incoming key press, x and y.
 
 ## 2. Further
 
