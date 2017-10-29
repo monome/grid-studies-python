@@ -82,5 +82,5 @@ if __name__ == '__main__':
     grid_studies = GridStudies()
 
     loop = asyncio.get_event_loop()
-    asyncio.async(monome.SerialOsc.create(autoconnect_app=grid_studies))
+    asyncio.async(monome.SerialOsc.create(loop=loop, autoconnect_app=grid_studies))
     loop.run_forever()
