@@ -4,42 +4,30 @@ import asyncio
 import monome
 
 class GridStudies(monome.GridApp):
-
     def __init__(self):
         super().__init__()
-    
-    # track connection status:
-    def connectGrid(state, self):
-        self.connected = state
-        try:
-            self.firstConnection
-            self.firstConnection = False
-        except:
-            self.firstConnection = True
-            playTask = asyncio.create_task(self.play())
+
+    width = 0
+    height = 0
+    step = [[0 for col in range(16)] for row in range(16)]
+    play_position = -1
 
     # when grid is plugged in via USB:
     def on_grid_ready(self):
-        global width
-        width = self.grid.width
-        global height
-        height = self.grid.height
-        global canvasFloor
-        canvasFloor = height-2
-        
-        GridStudies.connectGrid(True, self)
-        if self.firstConnection:
-            self.step = [[0 for col in range(width)] for row in range(canvasFloor)]
-            self.play_position = -1
+        self.width = self.grid.width
+        self.height = self.grid.height
+        self.connected = True
+        self.sequencer_rows = self.height-2
 
     # when grid is physically disconnected:
     def on_grid_disconnect(self,*args):
-        GridStudies.connectGrid(False, self)
+        self.connected = False
 
     async def play(self):
         while True:
             await asyncio.sleep(0.1)
-            if self.play_position == width - 1:
+            
+            if self.play_position == self.width - 1:
                 self.play_position = 0
             else:
                 self.play_position += 1
@@ -48,17 +36,17 @@ class GridStudies(monome.GridApp):
                 self.draw()
 
     def draw(self):
-        buffer = monome.GridBuffer(width, height)
+        buffer = monome.GridBuffer(self.width, self.height)
 
         # display steps
-        for x in range(width):
+        for x in range(self.width):
             # highlight the play position
             if x == self.play_position:
                 highlight = 4
             else:
                 highlight = 0
 
-            for y in range(canvasFloor):
+            for y in range(self.sequencer_rows):
                 buffer.led_level_set(x, y, self.step[y][x] * 11 + highlight)
                 
         # update grid
@@ -66,7 +54,7 @@ class GridStudies(monome.GridApp):
 
     def on_grid_key(self, x, y, s):
         # toggle steps
-        if s == 1 and y < canvasFloor:
+        if s == 1 and y < self.sequencer_rows:
             self.step[y][x] ^= 1
             self.draw()
 
@@ -80,6 +68,8 @@ async def main():
 
     serialosc = monome.SerialOsc()
     serialosc.device_added_event.add_handler(serialosc_device_added)
+
+    play_task = asyncio.create_task(grid_studies.play())
 
     await serialosc.connect()
     await loop.create_future()
