@@ -6,24 +6,25 @@ import monome
 class GridStudies(monome.GridApp):
     def __init__(self):
         super().__init__()
+        self.width = 0
+        self.height = 0
+        self.step = [[0 for col in range(16)] for row in range(16)]
+        self.play_position = -1
+        self.next_position = -1
+        self.cutting = False
+        self.loop_start = 0
+        self.loop_end = self.width - 1
+        self.keys_held = 0
+        self.key_last = 0
+        self.play_task = asyncio.ensure_future(self.play())
 
-    width = 0
-    height = 0
-    step = [[0 for col in range(16)] for row in range(16)]
-    play_position = -1
-    next_position = -1
-    cutting = False
-    loop_start = 0
-    loop_end = width - 1
-    keys_held = 0
-    key_last = 0
-    
     # when grid is plugged in via USB:
     def on_grid_ready(self):
         self.width = self.grid.width
         self.height = self.grid.height
         self.sequencer_rows = self.height-2
         self.connected = True
+        self.draw()
 
     def on_grid_disconnect(self,*args):
         self.connected = False
@@ -31,7 +32,7 @@ class GridStudies(monome.GridApp):
     async def play(self):
         while True:
             await asyncio.sleep(0.1)
-            
+
             if self.cutting:
                 self.play_position = self.next_position
             elif self.play_position == self.width - 1:
@@ -110,8 +111,6 @@ async def main():
 
     serialosc = monome.SerialOsc()
     serialosc.device_added_event.add_handler(serialosc_device_added)
-
-    play_task = asyncio.create_task(grid_studies.play())
 
     await serialosc.connect()
     await loop.create_future()
