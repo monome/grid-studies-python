@@ -18,8 +18,8 @@ class GridStudies(monome.GridApp):
     def on_grid_ready(self):
         self.width = self.grid.width
         self.height = self.grid.height
-        self.connected = True
         self.sequencer_rows = self.height-2
+        self.connected = True
 
     # when grid is physically disconnected:
     def on_grid_disconnect(self,*args):
