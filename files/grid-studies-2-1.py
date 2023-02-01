@@ -6,49 +6,37 @@ import monome
 class GridStudies(monome.GridApp):
     def __init__(self):
         super().__init__()
-        self.width = 0
-        self.height = 0
-        self.step = [[0 for col in range(16)] for row in range(16)]
-        self.play_task = asyncio.ensure_future(self.play())
 
-    # when grid is plugged in via USB:
     def on_grid_ready(self):
-        self.width = self.grid.width
-        self.height = self.grid.height
-        self.sequencer_rows = self.height-2
-        self.connected = True
-        self.draw()
+        self.step = [[0 for col in range(self.grid.width)] for row in range(6)]
 
-    # when grid is physically disconnected:
-    def on_grid_disconnect(self, *args):
-        self.connected = False
+        asyncio.async(self.play())
 
     async def play(self):
         while True:
+            self.draw()
+
             await asyncio.sleep(0.1)
 
-            self.draw()
-
-    def on_grid_key(self, x, y, s):
-        # toggle steps
-        if s == 1 and y < self.sequencer_rows:
-            self.step[y][x] ^= 1
-            self.draw()
-
     def draw(self):
-        buffer = monome.GridBuffer(self.width, self.height)
+        buffer = monome.GridBuffer(self.grid.width, self.grid.height)
 
         # display steps
-        for x in range(self.width):
-            for y in range(self.sequencer_rows):
+        for x in range(self.grid.width):
+            for y in range(6):
                 buffer.led_level_set(x, y, self.step[y][x] * 11)
 
         # update grid
-        if self.connected:
-            buffer.render(self.grid)
+        buffer.render(self.grid)
 
-async def main():
-    loop = asyncio.get_running_loop()
+    def on_grid_key(self, x, y, s):
+        # toggle steps
+        if s == 1 and y < 6:
+            self.step[y][x] ^= 1
+            self.draw()
+
+if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
     grid_studies = GridStudies()
 
     def serialosc_device_added(id, type, port):
@@ -58,8 +46,5 @@ async def main():
     serialosc = monome.SerialOsc()
     serialosc.device_added_event.add_handler(serialosc_device_added)
 
-    await serialosc.connect()
-    await loop.create_future()
-
-if __name__ == '__main__':
-    asyncio.run(main())
+    loop.run_until_complete(serialosc.connect())
+    loop.run_forever()
